@@ -4,8 +4,6 @@ import (
 	"fmt"
 )
 
-var kv *KV
-
 type KV struct {
 	manager *Manager
 }
@@ -14,16 +12,15 @@ func NewKV(manager *Manager) *KV {
 	return &KV{manager: manager}
 }
 
-func Init(kvManager KvManager) {
-	manager := NewManager(kvManager)
-	kv = NewKV(manager)
-}
-
-func GetManager() *Manager {
+func (kv *KV) GetManager() *Manager {
 	return kv.manager
 }
 
-func Set(namespace string, key string, val Value, opts ...Option) error {
+func (kv *KV) RegisterHandler(valType Type, handler Handler) {
+	kv.manager.RegisterHandler(valType, handler)
+}
+
+func (kv *KV) Set(namespace string, key string, val Value, opts ...Option) error {
 	if kv == nil {
 		return fmt.Errorf("kv not initialized")
 	}
@@ -36,7 +33,7 @@ func Set(namespace string, key string, val Value, opts ...Option) error {
 	if !ok {
 		return fmt.Errorf("handler for value type %s is not a setter", valType)
 	}
-	err := Delete(namespace, key, opts...)
+	err := kv.Delete(namespace, key, opts...)
 	if err != nil {
 		return err
 	}
@@ -47,7 +44,7 @@ func Set(namespace string, key string, val Value, opts ...Option) error {
 	return setter.Set(namespace, key, val, opts...)
 }
 
-func Get(namespace string, key string, opts ...Option) (Value, error) {
+func (kv *KV) Get(namespace string, key string, opts ...Option) (Value, error) {
 	if kv == nil {
 		return nil, fmt.Errorf("kv not initialized")
 	}
@@ -73,7 +70,7 @@ func Get(namespace string, key string, opts ...Option) (Value, error) {
 	return getter.Get(namespace, key, opts...)
 }
 
-func Delete(namespace string, key string, opts ...Option) error {
+func (kv *KV) Delete(namespace string, key string, opts ...Option) error {
 	if kv == nil {
 		return fmt.Errorf("kv not initialized")
 	}
@@ -103,7 +100,7 @@ func Delete(namespace string, key string, opts ...Option) error {
 	return deleter.Delete(namespace, key, opts...)
 }
 
-func ListKeys(namespace string, opts ...Option) ([]string, error) {
+func (kv *KV) ListKeys(namespace string, opts ...Option) ([]string, error) {
 	if kv == nil {
 		return nil, fmt.Errorf("kv not initialized")
 	}
