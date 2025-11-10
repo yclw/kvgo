@@ -3,13 +3,17 @@ package kvgo
 import "sync"
 
 type Manager struct {
-	mu        sync.RWMutex
-	handlers  map[Type]Handler
-	kvManager KvManager
+	mu       sync.RWMutex
+	handlers map[Type]Handler
+	KvManager
 }
 
-func NewManager() *Manager {
-	return &Manager{handlers: make(map[Type]Handler)}
+func NewManager(kvManager KvManager) *Manager {
+	return &Manager{handlers: make(map[Type]Handler), KvManager: kvManager}
+}
+
+func (m *Manager) SetKvManager(kvManager KvManager) {
+	m.KvManager = kvManager
 }
 
 func (m *Manager) RegisterHandler(valType Type, handler Handler) {
