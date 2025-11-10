@@ -1,4 +1,4 @@
-package string
+package kvstring
 
 import "github.com/yclw/kvgo"
 
