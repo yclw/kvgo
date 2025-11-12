@@ -1,6 +1,7 @@
 package kvfile
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/minio/minio-go/v7"
@@ -28,7 +29,11 @@ func (h *FileHandler) Set(namespace string, key string, val kvgo.Value, opts ...
 	option := GetOptions(opts...)
 	ctx := option.Context
 	fileOptions := GetFileOptions(opts...)
-	_, err := h.client.PutObject(ctx, namespace, key, fileValue.Value, fileOptions.Size, minio.PutObjectOptions{ContentType: fileOptions.ContentType})
+	err := h.ensureBucket(ctx, namespace)
+	if err != nil {
+		return err
+	}
+	_, err = h.client.PutObject(ctx, namespace, key, fileValue.Value, fileOptions.Size, minio.PutObjectOptions{ContentType: fileOptions.ContentType})
 	if err != nil {
 		return err
 	}
@@ -49,4 +54,24 @@ func (h *FileHandler) Delete(namespace string, key string, opts ...kvgo.Option) 
 	option := GetOptions(opts...)
 	ctx := option.Context
 	return h.client.RemoveObject(ctx, namespace, key, minio.RemoveObjectOptions{})
+}
+
+func (h *FileHandler) ensureBucket(ctx context.Context, bucket string) error {
+	exists, err := h.client.BucketExists(ctx, bucket)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		if err := h.client.MakeBucket(ctx, bucket, minio.MakeBucketOptions{}); err != nil {
+			// 如果多个并发请求同时创建，可再检查一次是否已存在
+			exists, err = h.client.BucketExists(ctx, bucket)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				return err
+			}
+		}
+	}
+	return nil
 }
