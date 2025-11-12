@@ -63,7 +63,7 @@ func (m *RedisManager) UpsertType(namespace string, key string, valType kvgo.Typ
 	option := GetOptions(opts...)
 	ctx := option.Context
 	key_ := kvgo.FormatKey(m.prefix, namespace, key)
-	return m.client.Set(ctx, key_, valType, option.TTL).Err()
+	return m.client.Set(ctx, key_, string(valType), option.TTL).Err()
 }
 
 func (m *RedisManager) Delete(namespace string, key string, opts ...kvgo.Option) error {
